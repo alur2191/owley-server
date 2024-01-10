@@ -7,24 +7,19 @@ app = Flask(__name__)
 load_dotenv()
 
 client = OpenAI(
-    # This is the default and can be omitted
     api_key=os.environ.get("OPENAI_KEY"),
 )
 
 @app.route('/gpt3', methods=['POST'])
 def gpt3():
     try:
-        # Extracting data from the request
-        # data = request.json
-        # prompt = data.get('prompt')
-        # max_tokens = data.get('max_tokens', 150)
-
-        # Making a request to OpenAI API
+        data = request.json
+        text = data.get('text')
         response = client.chat.completions.create(
             messages=[
                 {
                     "role": "user",
-                    "content": "Say this is a test",
+                    "content": text,
                 }
             ],
             model="gpt-3.5-turbo",
@@ -32,7 +27,7 @@ def gpt3():
 
 
         # Returning the response
-        return jsonify(response.choices[0].text.strip())
+        return response
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
