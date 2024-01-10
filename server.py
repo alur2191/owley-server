@@ -1,28 +1,35 @@
 from flask import Flask, request, jsonify
-import openai
+from openai import OpenAI
 from dotenv import load_dotenv
 import os
 
 app = Flask(__name__)
 load_dotenv()
-openai_api_key = os.getenv('OPENAI_KEY')
-# Set your OpenAI API key here. It's recommended to use an environment variable in production.
-openai.api_key = openai_api_key
+
+client = OpenAI(
+    # This is the default and can be omitted
+    api_key=os.environ.get("OPENAI_KEY"),
+)
 
 @app.route('/gpt3', methods=['POST'])
 def gpt3():
     try:
         # Extracting data from the request
-        data = request.json
-        prompt = data.get('prompt')
-        max_tokens = data.get('max_tokens', 150)
+        # data = request.json
+        # prompt = data.get('prompt')
+        # max_tokens = data.get('max_tokens', 150)
 
         # Making a request to OpenAI API
-        response = openai.Completion.create(
-            engine="text-davinci-002",
-            prompt=prompt,
-            max_tokens=max_tokens
+        response = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": "Say this is a test",
+                }
+            ],
+            model="gpt-3.5-turbo",
         )
+
 
         # Returning the response
         return jsonify(response.choices[0].text.strip())
