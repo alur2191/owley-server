@@ -79,13 +79,25 @@ def gpt3():
             max_tokens=150,
             model="gpt-3.5-turbo",
         )
-# Extracting relevant data from the response
+
+        # Extracting relevant data from the response
         formatted_response = {
             "id": response.id,
             "created": response.created,
             "model": response.model,
-            "choices": [{"content": choice.message["content"], "role": choice.message["role"]} for choice in response.choices],
-            "max_tokens": response.usage["total_tokens"],
+            "choices": [
+                {
+                    "content": choice.message.content, 
+                    "role": choice.message.role,
+                    "finish_reason": choice.finish_reason
+                } 
+                for choice in response.choices
+            ],
+            "usage": {
+                "completion_tokens": response.usage.completion_tokens,
+                "prompt_tokens": response.usage.prompt_tokens,
+                "total_tokens": response.usage.total_tokens
+            }
         }
 
         logging.info(f"Generated response: {formatted_response}")
@@ -96,6 +108,7 @@ def gpt3():
     except Exception as e:
         logging.error(f"Failed to generate response: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5050)
