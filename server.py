@@ -38,7 +38,7 @@ def send_verification_email():
         verification_link = auth.generate_email_verification_link(email)
         sg = sendgrid.SendGridAPIClient(SENDGRID_API_KEY)
         message = Mail(
-            from_email='your-email@example.com',
+            from_email='info@owley.ai',
             to_emails=email,
             subject='Verify your email',
             html_content=f'Please verify your email by clicking the following link: <a href="{verification_link}">Verify Email</a>'
