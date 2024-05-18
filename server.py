@@ -79,14 +79,13 @@ def gpt3():
             max_tokens=150,
             model="gpt-3.5-turbo",
         )
-
-        # Extracting relevant data from the response
+# Extracting relevant data from the response
         formatted_response = {
-            "id": response['id'],
-            "created": response['created'],
-            "model": response['model'],
-            "choices": [{"content": choice['message']['content'], "role": choice['message']['role']} for choice in response['choices']],
-            "max_tokens": response['usage']['total_tokens'],
+            "id": response.id,
+            "created": response.created,
+            "model": response.model,
+            "choices": [{"content": choice.message["content"], "role": choice.message["role"]} for choice in response.choices],
+            "max_tokens": response.usage["total_tokens"],
         }
 
         logging.info(f"Generated response: {formatted_response}")
