@@ -66,7 +66,7 @@ def gpt3():
         text = data.get('text')
         logging.info(f"Received text: {text}")
         
-        response = openai.ChatCompletion.create(
+        response = openai.chat.completions.create(
             messages=[
                 {
                     "role": "user",
