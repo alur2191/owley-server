@@ -1,6 +1,6 @@
 import logging
 from flask import Flask, request, jsonify, url_for
-import openai
+from openai import OpenAI
 from dotenv import load_dotenv
 import os
 import sendgrid
@@ -12,8 +12,11 @@ from firebase_admin import auth, credentials
 app = Flask(__name__)
 load_dotenv()
 
-# Initialize OpenAI client
-openai.api_key = os.environ.get("OPENAI_KEY")
+
+client = OpenAI(
+    # This is the default and can be omitted
+    api_key=os.environ.get("OPENAI_KEY"),
+)
 
 # Initialize SendGrid
 SENDGRID_API_KEY = os.environ.get("SENDGRID_KEY")
@@ -66,7 +69,7 @@ def gpt3():
         text = data.get('text')
         logging.info(f"Received text: {text}")
         
-        response = openai.chat.completions.create(
+        response = client.chat.completions.create(
             messages=[
                 {
                     "role": "user",
