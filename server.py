@@ -63,27 +63,34 @@ def gpt3():
     try:
         data = request.json
         text = data.get('text')
-        response = openai.Completion.create(
-            engine="gpt-3.5-turbo",
-            prompt=text,
-            max_tokens=100
+        response = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": text,
+                }
+            ],
+            max_tokens=150,
+            model="gpt-3.5-turbo",
         )
+
 
         # Extracting relevant data from the response
         formatted_response = {
-            "id": response.get('id'),
-            "created": response.get('created'),
-            "model": response.get('model'),
-            "choices": [{"content": choice['text']} for choice in response.get('choices', [])],
-            "usage": response.get('usage', {}).get('total_tokens'),
+            "id": response.id,
+            "created": response.created,
+            "model": response.model,
+            "choices": [{"content": choice.message.content, "role": choice.message.role} for choice in response.choices],
+            "max_tokens": response.usage.total_tokens,
         }
 
         # Returning the formatted response as JSON
         return jsonify(formatted_response)
 
     except Exception as e:
-        logging.error(f"GPT-3 request failed: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5050)
+
