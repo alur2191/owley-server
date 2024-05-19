@@ -76,7 +76,7 @@ def generate_deck():
         logging.info(f"Received text: {text}")
 
         # Create a request to the OpenAI API
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {
