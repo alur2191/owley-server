@@ -53,18 +53,19 @@ def send_verification_email():
         logging.error(
             f"Failed to send verification email to {email}: {str(e)}")
         return jsonify({'error': str(e)}), 500
-
 @app.route('/generate_deck', methods=['POST'])
 def generate_deck():
     logging.info(">>>>> INCOMING DECK GPT REQUEST <<<<<")
     try:
         data = request.json
         
-        # Ensure data is a dictionary
-        if not isinstance(data, dict):
-            raise ValueError("Invalid input format, expected a JSON object")
-
-        answers = data.get('answers', [])
+        # Check if data is a list and handle accordingly
+        if isinstance(data, list):
+            answers = data
+        elif isinstance(data, dict):
+            answers = data.get('answers', [])
+        else:
+            raise ValueError("Invalid input format, expected a JSON object or array of answers")
 
         if not answers:
             raise ValueError("No answers provided")
@@ -114,7 +115,6 @@ def generate_deck():
     except Exception as e:
         logging.error(f"Failed to generate response: {str(e)}")
         return jsonify({'error': str(e)}), 500
-
 
 @app.route('/verify_email', methods=['GET'])
 def verify_email():
