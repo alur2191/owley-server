@@ -54,7 +54,6 @@ def send_verification_email():
             f"Failed to send verification email to {email}: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-
 @app.route('/generate_deck', methods=['POST'])
 def generate_deck():
     logging.info(">>>>> INCOMING DECK GPT REQUEST <<<<<")
@@ -72,9 +71,16 @@ def generate_deck():
         if not answers:
             raise ValueError("No answers provided")
 
-        # Concatenate questions and answers into a single prompt text
-        text = "\n".join(
-            [f"Q: {answer['question']}\nA: {answer['answer']}" for answer in answers])
+        # Instructional text to be added before the list of questions and answers
+        instructional_text = (
+            "Help generate only a single flashcard deck question and answer. I will provide you with questions and answers that will help you better understand what content I need."
+            "In your response I only need you to respond with questions and answers I'm requesting for flashcards."
+        )
+
+        # Concatenate instructional text and questions and answers into a single prompt text
+        text = instructional_text + "\n\n" + "\n".join(
+            [f"Q: {answer['question']}\nA: {answer['answer']}" for answer in answers]
+        )
         logging.info(f"Received text: {text}")
 
         # Create a request to the OpenAI API
