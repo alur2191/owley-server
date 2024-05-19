@@ -53,12 +53,14 @@ def send_verification_email():
         logging.error(
             f"Failed to send verification email to {email}: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+
 @app.route('/generate_deck', methods=['POST'])
 def generate_deck():
     logging.info(">>>>> INCOMING DECK GPT REQUEST <<<<<")
     try:
         data = request.json
-        
+
         # Check if data is a list and handle accordingly
         if isinstance(data, list):
             answers = data
@@ -76,7 +78,7 @@ def generate_deck():
         logging.info(f"Received text: {text}")
 
         # Create a request to the OpenAI API
-        response = client.chat.completions.create(
+        response = client.chat_completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {
@@ -88,22 +90,23 @@ def generate_deck():
         )
 
         # Extract relevant data from the response
+        response_dict = response.to_dict()
         formatted_response = {
-            "id": response['id'],
-            "created": response['created'],
-            "model": response['model'],
+            "id": response_dict['id'],
+            "created": response_dict['created'],
+            "model": response_dict['model'],
             "choices": [
                 {
                     "content": choice['message']['content'],
                     "role": choice['message']['role'],
                     "finish_reason": choice['finish_reason']
                 }
-                for choice in response['choices']
+                for choice in response_dict['choices']
             ],
             "usage": {
-                "completion_tokens": response['usage']['completion_tokens'],
-                "prompt_tokens": response['usage']['prompt_tokens'],
-                "total_tokens": response['usage']['total_tokens']
+                "completion_tokens": response_dict['usage']['completion_tokens'],
+                "prompt_tokens": response_dict['usage']['prompt_tokens'],
+                "total_tokens": response_dict['usage']['total_tokens']
             }
         }
 
