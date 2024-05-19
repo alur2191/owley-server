@@ -26,8 +26,9 @@ cred = credentials.Certificate('credentials.json')
 firebase_admin.initialize_app(cred)
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, filename='app.log', 
+logging.basicConfig(level=logging.INFO, filename='app.log',
                     format='%(asctime)s %(levelname)s %(message)s')
+
 
 @app.route('/send_verification_email', methods=['POST'])
 def send_verification_email():
@@ -37,6 +38,8 @@ def send_verification_email():
         user = auth.get_user_by_email(email)
         verification_link = auth.generate_email_verification_link(email)
         sg = sendgrid.SendGridAPIClient(SENDGRID_API_KEY)
+        logging.info("SENDGRID_API_KEY>>>>>>")
+        logging.info(SENDGRID_API_KEY)
         message = Mail(
             from_email='info@owley.ai',
             to_emails=email,
@@ -47,8 +50,66 @@ def send_verification_email():
         logging.info(f"Verification email sent to {email}")
         return jsonify({'message': 'Verification email sent!'}), 200
     except Exception as e:
-        logging.error(f"Failed to send verification email to {email}: {str(e)}")
+        logging.error(
+            f"Failed to send verification email to {email}: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+@app.route('/generate_deck', methods=['POST'])
+def generate_deck():
+    logging.info(">>>>> INCOMING DECK GPT REQUEST <<<<<")
+    try:
+        data = request.json
+        answers = data.get('answers', [])
+
+        if not answers:
+            raise ValueError("No answers provided")
+
+        # Concatenate questions and answers into a single prompt text
+        text = "\n".join(
+            [f"Q: {answer['question']}\nA: {answer['answer']}" for answer in answers])
+        logging.info(f"Received text: {text}")
+
+        # Create a request to the OpenAI API
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {
+                    "role": "user",
+                    "content": text,
+                }
+            ],
+            max_tokens=150,
+        )
+
+        # Extract relevant data from the response
+        formatted_response = {
+            "id": response['id'],
+            "created": response['created'],
+            "model": response['model'],
+            "choices": [
+                {
+                    "content": choice['message']['content'],
+                    "role": choice['message']['role'],
+                    "finish_reason": choice['finish_reason']
+                }
+                for choice in response['choices']
+            ],
+            "usage": {
+                "completion_tokens": response['usage']['completion_tokens'],
+                "prompt_tokens": response['usage']['prompt_tokens'],
+                "total_tokens": response['usage']['total_tokens']
+            }
+        }
+
+        logging.info(f"Generated response: {formatted_response}")
+
+        # Return the formatted response as JSON
+        return jsonify(formatted_response)
+
+    except Exception as e:
+        logging.error(f"Failed to generate response: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/verify_email', methods=['GET'])
 def verify_email():
@@ -61,6 +122,7 @@ def verify_email():
         logging.error(f"Failed to verify email with code {oob_code}: {str(e)}")
         return str(e), 400
 
+
 @app.route('/gpt3', methods=['POST'])
 def gpt3():
     logging.info(">>>>>INCOMING GPT REQUEST<<<<<<")
@@ -68,7 +130,7 @@ def gpt3():
         data = request.json
         text = data.get('text')
         logging.info(f"Received text: {text}")
-        
+
         response = client.chat.completions.create(
             messages=[
                 {
@@ -87,10 +149,10 @@ def gpt3():
             "model": response.model,
             "choices": [
                 {
-                    "content": choice.message.content, 
+                    "content": choice.message.content,
                     "role": choice.message.role,
                     "finish_reason": choice.finish_reason
-                } 
+                }
                 for choice in response.choices
             ],
             "usage": {
