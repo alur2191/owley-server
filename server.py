@@ -59,6 +59,11 @@ def generate_deck():
     logging.info(">>>>> INCOMING DECK GPT REQUEST <<<<<")
     try:
         data = request.json
+        
+        # Ensure data is a dictionary
+        if not isinstance(data, dict):
+            raise ValueError("Invalid input format, expected a JSON object")
+
         answers = data.get('answers', [])
 
         if not answers:
