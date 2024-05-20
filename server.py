@@ -53,6 +53,15 @@ def send_verification_email():
         logging.error(
             f"Failed to send verification email to {email}: {str(e)}")
         return jsonify({'error': str(e)}), 500
+from flask import Flask, request, jsonify
+import logging
+import openai
+
+app = Flask(__name__)
+
+# Ensure to configure OpenAI API key before using it.
+openai.api_key = 'your-openai-api-key'
+
 @app.route('/generate_deck', methods=['POST'])
 def generate_deck():
     logging.info(">>>>> INCOMING DECK GPT REQUEST <<<<<")
@@ -60,18 +69,14 @@ def generate_deck():
         data = request.json
 
         # Extracting additional fields
+        deck_name = data.get('deckName', 'Unnamed Deck')
         about_deck = data.get('aboutDeck', '')
-        ai_version = data.get('aiVersion', 'gpt-4-turbo')  # Default to 'gpt-4-turbo'
+        ai_version = data.get('aiVersion', 'gpt-3.5-turbo-0125')  # Default to 'gpt-3.5-turbo-0125'
         length = int(data.get('length', 150))  # Default to 150 if not provided
 
         # Check if answers are provided correctly
-        if isinstance(data, list):
-            answers = data
-        elif isinstance(data, dict):
-            answers = data.get('answers', [])
-        else:
-            raise ValueError("Invalid input format, expected a JSON object or array of answers")
-
+        answers = data.get('answers', [])
+        
         if not answers:
             raise ValueError("No answers provided")
 
@@ -94,7 +99,7 @@ def generate_deck():
         logging.info(f"Received text: {text}")
 
         # Create a request to the OpenAI API
-        response = client.chat.completions.create(
+        response = openai.chat.completions.create(
             model=ai_version,
             messages=[
                 {
@@ -106,23 +111,22 @@ def generate_deck():
         )
 
         # Extract relevant data from the response
-        response_dict = response.to_dict()
         formatted_response = {
-            "id": response_dict['id'],
-            "created": response_dict['created'],
-            "model": response_dict['model'],
+            "id": response['id'],
+            "created": response['created'],
+            "model": response['model'],
             "choices": [
                 {
                     "content": choice['message']['content'],
                     "role": choice['message']['role'],
                     "finish_reason": choice['finish_reason']
-                }
-                for choice in response_dict['choices']
+                } 
+                for choice in response['choices']
             ],
             "usage": {
-                "completion_tokens": response_dict['usage']['completion_tokens'],
-                "prompt_tokens": response_dict['usage']['prompt_tokens'],
-                "total_tokens": response_dict['usage']['total_tokens']
+                "completion_tokens": response['usage']['completion_tokens'],
+                "prompt_tokens": response['usage']['prompt_tokens'],
+                "total_tokens": response['usage']['total_tokens']
             }
         }
 
@@ -134,6 +138,9 @@ def generate_deck():
     except Exception as e:
         logging.error(f"Failed to generate response: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
 
 
 @app.route('/verify_email', methods=['GET'])
