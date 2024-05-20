@@ -53,14 +53,18 @@ def send_verification_email():
         logging.error(
             f"Failed to send verification email to {email}: {str(e)}")
         return jsonify({'error': str(e)}), 500
-
 @app.route('/generate_deck', methods=['POST'])
 def generate_deck():
     logging.info(">>>>> INCOMING DECK GPT REQUEST <<<<<")
     try:
         data = request.json
 
-        # Check if data is a list and handle accordingly
+        # Extracting additional fields
+        about_deck = data.get('aboutDeck', '')
+        ai_version = data.get('aiVersion', 'gpt-4-turbo')  # Default to 'gpt-4-turbo'
+        length = int(data.get('length', 150))  # Default to 150 if not provided
+
+        # Check if answers are provided correctly
         if isinstance(data, list):
             answers = data
         elif isinstance(data, dict):
@@ -73,26 +77,32 @@ def generate_deck():
 
         # Instructional text to be added before the list of questions and answers
         instructional_text = (
-            "Help generate only a single flashcard deck question and answer. I will provide you with questions and answers that will help you better understand what content I need."
-            "In your response I only need you to respond with questions and answers I'm requesting for flashcards."
+            "Help generate only a single flashcard deck question. I will provide you with questions and answers that will help you better understand what content I need."
+            "In your response I only need you to respond with a question I'm requesting for flashcards."
         )
 
-        # Concatenate instructional text and questions and answers into a single prompt text
-        text = instructional_text + "\n\n" + "\n".join(
+        # Additional text based on the about deck input
+        additional_text = (
+            f"{about_deck}\n\n"
+            "Here are some questions and answers for determining what type of data I'm seeking help with:"
+        )
+
+        # Concatenate instructional text, additional text, and questions and answers into a single prompt text
+        text = instructional_text + "\n\n" + additional_text + "\n\n" + "\n".join(
             [f"Q: {answer['question']}\nA: {answer['answer']}" for answer in answers]
         )
         logging.info(f"Received text: {text}")
 
         # Create a request to the OpenAI API
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model=ai_version,
             messages=[
                 {
                     "role": "user",
                     "content": text,
                 }
             ],
-            max_tokens=150,
+            max_tokens=length,
         )
 
         # Extract relevant data from the response
@@ -125,6 +135,7 @@ def generate_deck():
         logging.error(f"Failed to generate response: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/verify_email', methods=['GET'])
 def verify_email():
     try:
@@ -153,7 +164,7 @@ def gpt3():
                 }
             ],
             max_tokens=150,
-            model="gpt-3.5-turbo",
+            model="gpt-4-turbo",
         )
 
         # Extracting relevant data from the response
@@ -184,6 +195,70 @@ def gpt3():
     except Exception as e:
         logging.error(f"Failed to generate response: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/deck_answer', methods=['POST'])
+def deck_answer():
+    logging.info(">>>>>INCOMING DECK ANSWER GPT REQUEST<<<<<<")
+    try:
+        data = request.json
+        text = data.get('text')
+
+        if not text:
+            raise ValueError("No text provided")
+
+        logging.info(f"Received text: {text}")
+
+        # Instructional text to be added before the input text
+        instructional_text = (
+            "Help generate only a single flashcard deck answer."
+        )
+
+        # Concatenate instructional text and the provided text
+        full_text = instructional_text + "\n\n" + text
+
+        # Create a request to the OpenAI API
+        response = client.chat.completions.create(
+            model="gpt-4-turbo",
+            messages=[
+                {
+                    "role": "user",
+                    "content": full_text,
+                }
+            ],
+            max_tokens=150,
+        )
+
+        # Extracting relevant data from the response
+        response_dict = response.to_dict()
+        formatted_response = {
+            "id": response_dict['id'],
+            "created": response_dict['created'],
+            "model": response_dict['model'],
+            "choices": [
+                {
+                    "content": choice['message']['content'],
+                    "role": choice['message']['role'],
+                    "finish_reason": choice['finish_reason']
+                }
+                for choice in response_dict['choices']
+            ],
+            "usage": {
+                "completion_tokens": response_dict['usage']['completion_tokens'],
+                "prompt_tokens": response_dict['usage']['prompt_tokens'],
+                "total_tokens": response_dict['usage']['total_tokens']
+            }
+        }
+
+        logging.info(f"Generated response: {formatted_response}")
+
+        # Returning the formatted response as JSON
+        return jsonify(formatted_response)
+
+    except Exception as e:
+        logging.error(f"Failed to generate response: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 
 
 if __name__ == '__main__':
