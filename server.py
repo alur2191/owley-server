@@ -59,7 +59,6 @@ import openai
 
 app = Flask(__name__)
 
-
 @app.route('/generate_deck', methods=['POST'])
 def generate_deck():
     logging.info(">>>>> INCOMING DECK GPT REQUEST <<<<<")
@@ -107,25 +106,24 @@ def generate_deck():
             ],
             max_tokens=length,
         )
-        print("response>>>>>>>")
-        print(response)
+
         # Extract relevant data from the response
         formatted_response = {
-            "id": response['id'],
-            "created": response['created'],
-            "model": response['model'],
+            "id": response.id,
+            "created": response.created,
+            "model": response.model,
             "choices": [
                 {
-                    "content": choice['message']['content'],
-                    "role": choice['message']['role'],
-                    "finish_reason": choice['finish_reason']
+                    "content": choice.message.content,
+                    "role": choice.message.role,
+                    "finish_reason": choice.finish_reason
                 } 
-                for choice in response['choices']
+                for choice in response.choices
             ],
             "usage": {
-                "completion_tokens": response['usage']['completion_tokens'],
-                "prompt_tokens": response['usage']['prompt_tokens'],
-                "total_tokens": response['usage']['total_tokens']
+                "completion_tokens": response.usage.completion_tokens,
+                "prompt_tokens": response.usage.prompt_tokens,
+                "total_tokens": response.usage.total_tokens
             }
         }
 
