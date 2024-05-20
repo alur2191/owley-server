@@ -59,8 +59,6 @@ import openai
 
 app = Flask(__name__)
 
-# Ensure to configure OpenAI API key before using it.
-openai.api_key = 'your-openai-api-key'
 
 @app.route('/generate_deck', methods=['POST'])
 def generate_deck():
@@ -99,7 +97,7 @@ def generate_deck():
         logging.info(f"Received text: {text}")
 
         # Create a request to the OpenAI API
-        response = openai.chat.completions.create(
+        response = client.chat.completions.create(
             model=ai_version,
             messages=[
                 {
@@ -113,7 +111,7 @@ def generate_deck():
         # Extract relevant data from the response
         formatted_response = {
             "id": response['id'],
-            "created": response['created'],
+            "created": respoßnse['created'],
             "model": response['model'],
             "choices": [
                 {
