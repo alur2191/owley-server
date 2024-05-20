@@ -107,11 +107,12 @@ def generate_deck():
             ],
             max_tokens=length,
         )
-
+        print("response>>>>>>>")
+        print(response)
         # Extract relevant data from the response
         formatted_response = {
             "id": response['id'],
-            "created": respoßnse['created'],
+            "created": response['created'],
             "model": response['model'],
             "choices": [
                 {
