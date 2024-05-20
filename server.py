@@ -53,11 +53,6 @@ def send_verification_email():
         logging.error(
             f"Failed to send verification email to {email}: {str(e)}")
         return jsonify({'error': str(e)}), 500
-from flask import Flask, request, jsonify
-import logging
-import openai
-
-app = Flask(__name__)
 
 @app.route('/generate_deck', methods=['POST'])
 def generate_deck():
@@ -107,19 +102,14 @@ def generate_deck():
             max_tokens=length,
         )
 
-        # Extract relevant data from the response
+        # Extract the generated question from the response
+        generated_question = response.choices[0].message.content
+
         formatted_response = {
+            "generated_question": generated_question,
             "id": response.id,
             "created": response.created,
             "model": response.model,
-            "choices": [
-                {
-                    "content": choice.message.content,
-                    "role": choice.message.role,
-                    "finish_reason": choice.finish_reason
-                } 
-                for choice in response.choices
-            ],
             "usage": {
                 "completion_tokens": response.usage.completion_tokens,
                 "prompt_tokens": response.usage.prompt_tokens,
@@ -135,9 +125,6 @@ def generate_deck():
     except Exception as e:
         logging.error(f"Failed to generate response: {str(e)}")
         return jsonify({'error': str(e)}), 500
-
-if __name__ == '__main__':
-    app.run(debug=True)
 
 
 @app.route('/verify_email', methods=['GET'])
