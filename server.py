@@ -53,7 +53,7 @@ def send_verification_email():
         logging.error(
             f"Failed to send verification email to {email}: {str(e)}")
         return jsonify({'error': str(e)}), 500
-
+    
 @app.route('/generate_deck', methods=['POST'])
 def generate_deck():
     logging.info(">>>>> INCOMING DECK GPT REQUEST <<<<<")
@@ -103,7 +103,7 @@ def generate_deck():
         )
 
         # Extract the generated question from the response
-        generated_question = response.choices[0].message.content
+        generated_question = response.choices[0].message['content'] if response.choices else None
 
         formatted_response = {
             "generated_question": generated_question,
@@ -125,7 +125,6 @@ def generate_deck():
     except Exception as e:
         logging.error(f"Failed to generate response: {str(e)}")
         return jsonify({'error': str(e)}), 500
-
 
 @app.route('/verify_email', methods=['GET'])
 def verify_email():
